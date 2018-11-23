@@ -1,12 +1,16 @@
-#encoding=utf-8
+# encoding=utf-8
 
 
 # GLOBLE_CONFIG
 ADDR = ('127.0.0.1', 8888)
 TEAM_NAME = "背锅侠"
 
+# 方向：
+MOVE_MAP = {(1, -1): "1", (1, 0): "2", (1, 1): "3", (0, -1): "4", (0, 0): "5", (0, 1): "6", (-1, -1): "7", (-1, 0): "8",
+            (-1, 1): "9"}
 
-#障碍物
+
+# 障碍物
 OBSTACLE_POSITION_ARRAY = {"0,27", "0,28", "0,29", "0,30", "1,27", "1,28", "1,29", "1,30",
                            "2,17", "2,27", "2,28", "2,29", "2,30", "3,5", "3,6", "3,7", "3,18", "3,26", "3,27", "3,28",
                            "3,29", "3,40",
@@ -72,14 +76,16 @@ OBSTACLE_POSITION_ARRAY = {"0,27", "0,28", "0,29", "0,30", "1,27", "1,28", "1,29
                            "49,23", "49,24",
                            "49,25", "49,26"};
 
-
 import numpy as np
+
+
 def get_original_map():
     pubg_map = np.zeros((50, 50))
     for obstacle in OBSTACLE_POSITION_ARRAY:
-        obstacle_x=obstacle.split(",")[0]
+        obstacle_x = obstacle.split(",")[0]
         obstacle_y = obstacle.split(",")[1]
-        pubg_map[int(obstacle_x)][int(obstacle_y)]=1
+        pubg_map[int(obstacle_x)][int(obstacle_y)] = 1
     return pubg_map
 
-PUBG_MAP=get_original_map()
+
+PUBG_MAP = get_original_map()
