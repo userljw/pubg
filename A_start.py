@@ -58,8 +58,27 @@ def astar(array, start, goal):
                 gscore[neighbor] = tentative_g_score
                 fscore[neighbor] = tentative_g_score + heuristic(neighbor, goal)
                 heappush(oheap, (fscore[neighbor], neighbor))
-
     return False
+
+
+
+"""
+start_point (x,y)
+end_point (x,y)
+"""
+def get_shortest_path(pubg_map,start_point,end_point):
+    try:
+        reverse_path = astar(pubg_map, tuple(start_point), tuple(end_point))
+        path = reverse_path[::-1]
+        return path
+    except:
+        return False
+
+
+
+
+
+
 
 
 def format_data_and_get_path(pubg_map,start_point_map,end_point_map):

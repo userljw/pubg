@@ -67,3 +67,26 @@
 # print(nmap[1,2])
 
 
+# def get_safe_edge_blank(treasures_map,left_point,radius):
+#     left_point_x=left_point[0]
+#     left_point_y=left_point[1]
+#     edge_list=[]
+#     for i in range(1,radius-1):
+#         point_top=(left_point_x+1,left_point_y+i)
+#         edge_list.append(point_top)
+#         point_buttom=(left_point_x+radius-2,left_point_y+i)
+#         point_left=(left_point_x+i,left_point_y+1)
+#         point_right=(left_point_x+i,left_point_y+radius-2)
+#         edge_list.append(point_buttom)
+#         edge_list.append(point_left)
+#         edge_list.append(point_right)
+#     return list(set(edge_list))
+
+#生成一个字典
+d = {'name':{},'age':{},'sex':{}}
+#打印返回值，其中d.keys()是列出字典所有的key
+print ("name" in d.keys())
+#结果返回Tru
+
+if 2< 11<4:
+    print(11111111111)
