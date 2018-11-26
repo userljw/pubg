@@ -6,7 +6,7 @@ from STATIC_DATA import ADDR, TEAM_NAME
 from AI import algorithm
 from Tools import get_treasure_map
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S')
 
 
@@ -26,10 +26,12 @@ def login():
 def mainloop(client):
     is_first_flag = True
     turn=1
+    poison_turn=0
     while True:
         recv_dic = client.recv(10240)
         if recv_dic["type"] == "posion":
-            logging.debug("-------------------毒圈轮数：%s-------------------" % str(recv_dic["turn"]))
+            poison_turn = recv_dic["turn"]
+            logging.debug("-------------------毒圈轮数：%s-------------------" % str(poison_turn))
             logging.debug("毒圈信息：%s" % recv_dic)
             if is_first_flag:
                 treasures = recv_dic["treasures"]
@@ -43,18 +45,20 @@ def mainloop(client):
                 turn = 1
         # 需要在5s内响应
         if recv_dic["type"] == "info":
-            logging.debug("队员信息：%s" % recv_dic)
+            remain_step = int(poison_turn) - int(turn)
+            logging.info("第【%s】轮, 刷毒回合数【%s】,剩余步数【%s】" % (turn, poison_turn, remain_step))
+            logging.debug("接收信息：%s" % recv_dic)
             real_data = recv_dic
-            move_str = algorithm(treasures_map=treasures_map, poison=poison_data, info=real_data,turn=turn)
+            move_str = algorithm(treasures_map=treasures_map, poison=poison_data, info=real_data,remain_step=remain_step)
             turn = turn + 1
             logging.info("发送信息：%s" % move_str)
             client.send(move_str)
 
 
 if __name__ == '__main__':
-    from testAIPlayer import test_main
 
-    test_main(5)
+    from testAIPlayer import test_main
+    test_main(2)
 
     client = login()
     mainloop(client)
