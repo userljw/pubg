@@ -7,6 +7,7 @@ from STATIC_DATA import OBSTACLE_POSITION_ARRAY,TEAM_NAME,MOVE_MAP
 import logging
 import A_start
 import Tools
+import copy
 
 # 方向说明    5代表原地不动
 # 7 8 9
@@ -53,50 +54,85 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
     logging.debug("players_info_has_shortest %s" %players_info_has_shortest) #每个队员信息增加最短路径
     # ----------------------------------基础信息准备-end---------------------------------------------
     #队员行动路径规则
-    # 前面两轮 吃buffer 集合
     players_move_list = []
-    if int(poison_turn) == 50 or int(poison_turn) == 30:
-        players_move_list_tmp=[]
-        for one_player in players_info_has_shortest:
-            one_player_id = one_player['id']
-            point_str = one_player["pos"]
-            start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
-            if one_player['status'] == 1:
-                one_sight_info = get_one_player_sight(id=one_player_id, sight_info_all=sight_info)
-                # 如果剩余步数>= 移动到安全区的最小步数
-                if remain_step >= len(one_player["path"]):
-                    # 吃视野内的buff
-                    buff_point = get_buff_in_sight(one_sight_info)
-                    if buff_point != None:
-                        move_action = A_start.get_shortest_path(treasures_map, start_point, buff_point)
-                        one_player["path"] = move_action  # 更新原来的行动路径
-            players_move_list_tmp.append(one_player)
-        logging.debug("players_move_list %s" % players_move_list_tmp)  # 视野内buff获取
+    #TODO
+    # if int(poison_turn) == 50 or int(poison_turn) == 30:
+    for one_player in players_info_has_shortest:
+        one_player_id = one_player['id']
+        point_str = one_player["pos"]
+        start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
+        if one_player['status'] == 1:
+            one_sight_info = get_one_player_sight(id=one_player_id, sight_info_all=sight_info)
+            # 如果剩余步数>= 移动到安全区的最小步数
+            if remain_step >= len(one_player["path"]):
+                # 吃视野内的buff
+                buff_point = get_buff_in_sight(one_sight_info)
+                if buff_point != None:
+                    move_action = A_start.get_shortest_path(treasures_map, start_point, buff_point)
+                    one_player["path"] = move_action  # 吃buff
+                # 攻击对手
+                enemy_point=find_enemy_in_sight(one_sight_info,start_point)
+                #一步范围内有人
+                if enemy_point !=None:
+                    if "teammate" in enemy_point:
+                        teammates_map=copy.deepcopy(treasures_map)
+                        teammates_map[enemy_point["teammate"][0],enemy_point["teammate"][1]]=1
+                        avoid_teammates=A_start.get_shortest_path(teammates_map,start_point,center_point)
+                        one_player["path"] = avoid_teammates  # 避让
+                    if "enemy" in enemy_point:
+                        attac_action=A_start.get_shortest_path(treasures_map, start_point, enemy_point["enemy"])
+                        one_player["path"] = attac_action # 进攻
+        players_move_list.append(one_player)
+    logging.debug("players_move_list %s" % players_move_list)
+
+    players_move_list_optimizationed=[]
+
+    #todo
+    if int(poison_turn) >=30 and remain_step >= 4:
+        for one_player in players_move_list:
+            if one_player['status'] == 1 and len(one_player["path"])==0:
+                #去吃地图上最近的一个宝物点：
+                point_str = one_player["pos"]
+                start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
+                nearest_buff=find_nearest_buff_in_map(start_point,treasures_map)
+                treasures_journey=A_start.get_shortest_path(treasures_map,start_point,nearest_buff)
+                one_player["path"] = treasures_journey # 获取宝物  而不是原地不动
+        players_move_list_optimizationed.append(one_player)
 
 
-
-        move_list = fornmat_move(players_move_list)
-        move_str = str({"move": move_list})
-        return move_str
-
-
-    #3.最后攻击
-
-    #返回路径格式化
-    move_list=fornmat_move(players_move_list)
-    move_str=str({"move":move_list})
+    # 返回路径格式化
+    move_list = fornmat_move(players_move_list_optimizationed)
+    move_str = str({"move": move_list})
     return move_str
 
 
-#获取单个视野
+
+
+
+"""
+获取地图内最近的宝物点
+4步数内
+"""
+def find_nearest_buff_in_map(start_point,treasures_map):
+    pass
+http://www.cnblogs.com/zhangbaoqiang/p/3534512.html
+
+
+
+
+"""
+获取单个视野
+"""
 def get_one_player_sight(id,sight_info_all):
     for one_sight_dic in sight_info_all:
         if id in one_sight_dic:
             return one_sight_dic[id]
     return []
 
-#获取视野的buff
+
+
 """
+获取视野内的buff
 2、	＋10攻击 player att+10
 3、	＋10血量 player hp+10
 4、	＋1视野 （player最大3格视野）
@@ -114,28 +150,30 @@ def get_buff_in_sight(one_sight_info):
             return end_point
     return None
 
+"""
+获取一步范围内敌人 和 队友的信息
+"""
+def find_enemy_in_sight(one_sight_info,start_point):
+    for point_dic in one_sight_info:
+        sight_point_str = point_dic["pos"]
+        sight_point = list(map(int, sight_point_str.strip("]").strip("[").split(",")))
+        setp_between=Tools.dist_between(sight_point,start_point)
+        #一步范围内
+        if point_dic["type"] == "6" and setp_between<3:
+            enemy_info_dic=point_dic["player"]
+            enemy_teamName=enemy_info_dic["teamName"]
+            if TEAM_NAME!=enemy_teamName:
+                return {"enemy":sight_point}
+            else:
+                return {"teammate":sight_point}
+    return None
 
 
 
 
-
-
-
-def collision_detection(move):
-    pass
-
-
-
-
-
-
-def anlyse_sight(pubg_map,players_shortest_path,sight_info):
-    # 判断视野内
-    pass
-
-
-
-#返回命令格式化
+"""
+返回命令格式化
+"""
 def fornmat_move(players_shortest_path):
     player_move_list=[]
     for one_player in players_shortest_path:

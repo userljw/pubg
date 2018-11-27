@@ -65,6 +65,9 @@
 #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 #
 # print(nmap[1,2])
+#
+# nmap[1,1]=11
+# print(nmap)
 
 
 # def get_safe_edge_blank(treasures_map,left_point,radius):

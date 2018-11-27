@@ -2,6 +2,7 @@
 
 from SockClient import SockClient
 import logging
+import random
 from STATIC_DATA import ADDR, TEAM_NAME
 from AI import algorithm
 from Tools import get_treasure_map
@@ -49,7 +50,14 @@ def mainloop(client):
             logging.info("第【%s】轮, 刷毒回合数【%s】,剩余步数【%s】" % (turn, poison_turn, remain_step))
             logging.debug("接收信息：%s" % recv_dic)
             real_data = recv_dic
-            move_str = algorithm(treasures_map=treasures_map, poison=poison_data, info=real_data,remain_step=remain_step)
+            #防止触发bug掉线
+            try:
+                move_str = algorithm(treasures_map=treasures_map, poison=poison_data, info=real_data,remain_step=remain_step)
+            except Exception as es:
+                logging.error("---触发算法bug，随机游走--- Exception[%s]" %Exception)
+                move_str = str({"move": [{"id": TEAM_NAME + "01", "movement": str(random.randint(1, 9))},
+                                         {"id": TEAM_NAME + "02", "movement": str(random.randint(1, 9))},
+                                         {"id": TEAM_NAME + "03", "movement": str(random.randint(1, 9))}]})
             turn = turn + 1
             logging.info("发送信息：%s" % move_str)
             client.send(move_str)
@@ -58,7 +66,7 @@ def mainloop(client):
 if __name__ == '__main__':
 
     from testAIPlayer import test_main
-    test_main(2)
+    test_main(4)
 
     client = login()
     mainloop(client)
