@@ -71,14 +71,9 @@ def get_shortest_path(pubg_map,start_point,end_point):
         reverse_path = astar(pubg_map, tuple(start_point), tuple(end_point))
         path = reverse_path[::-1]
         return path
-    except:
+    except Exception as es:
+        logging.error("----你已经无路可走啦----")
         return False
-
-
-
-
-
-
 
 
 def format_data_and_get_path(pubg_map,start_point_map,end_point_map):

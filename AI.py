@@ -13,6 +13,7 @@ import Tools
 # 4 5 6
 # 1 2 3
 def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
+    #----------------------------------基础信息准备-start---------------------------------------------
     poison_turn=poison["turn"]  #毒圈轮数
     # logging.info("第【%s】轮, 刷毒回合数【%s】,剩余步数【%s】" % (turn,poison_turn,remain_step))
     players_info=info["players"]
@@ -25,52 +26,105 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
     center_point = Tools.get_blank_point(center_point_unchecked, treasures_map)
     #下一个安全区域边缘
     edge_point_list=Tools.get_safe_edge_blank(treasures_map,left_point,radius)
-    #获得到下一个安全区最短路径 如果在安全里面 one_player["path"]=[]
+    #获得到下一个安全区最短路径 如果在安全里面 one_player["path"]=[]  如果死亡 one_player["path"]=Flase
     players_info_has_shortest = []
     for one_player in players_info:
         point_str = one_player["pos"]
         start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
         if one_player['status'] == 1:
-            if center_point_unchecked[0]- (radius - 1) / 2 < start_point[0] <  center_point_unchecked[0]+(radius - 1) / 2 and center_point_unchecked[0]- (radius - 1) / 2 < start_point[1] <  center_point_unchecked[0]+(radius - 1) / 2:
+            if left_point[0] < start_point[0] < left_point[0]+ radius-1 and left_point[1] < start_point[1] < left_point[1]+ radius-1:
                 one_player["path"] = []
-            else:
+            #  最后一圈 边界判断失效 直接去中心点
+            elif int(poison_turn)>5:
                 for end_point in edge_point_list:
                     path_tmp = A_start.get_shortest_path(treasures_map, start_point, end_point)
-                    if "path" not in one_player:
-                        one_player["path"]=path_tmp
-                    elif len(one_player["path"])>= len(path_tmp):
-                        one_player["path"]=path_tmp
+                    if path_tmp!= False:
+                        if "path" not in one_player:
+                            one_player["path"]=path_tmp
+                        elif len(one_player["path"])>= len(path_tmp):
+                            one_player["path"]=path_tmp
+            else:
+                path_tmp = A_start.get_shortest_path(treasures_map, start_point, center_point)
+                one_player["path"] = path_tmp
+        #队员已经死了
         else:
             one_player["path"] =False
         players_info_has_shortest.append(one_player)
     logging.debug("players_info_has_shortest %s" %players_info_has_shortest) #每个队员信息增加最短路径
-    
+    # ----------------------------------基础信息准备-end---------------------------------------------
     #队员行动路径规则
-    #1.毒圈轮数判断
-    #前2圈，先吃buff，不进攻。
+    # 前面两轮 吃buffer 集合
+    players_move_list = []
+    if int(poison_turn) == 50 or int(poison_turn) == 30:
+        players_move_list_tmp=[]
+        for one_player in players_info_has_shortest:
+            one_player_id = one_player['id']
+            point_str = one_player["pos"]
+            start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
+            if one_player['status'] == 1:
+                one_sight_info = get_one_player_sight(id=one_player_id, sight_info_all=sight_info)
+                # 如果剩余步数>= 移动到安全区的最小步数
+                if remain_step >= len(one_player["path"]):
+                    # 吃视野内的buff
+                    buff_point = get_buff_in_sight(one_sight_info)
+                    if buff_point != None:
+                        move_action = A_start.get_shortest_path(treasures_map, start_point, buff_point)
+                        one_player["path"] = move_action  # 更新原来的行动路径
+            players_move_list_tmp.append(one_player)
+        logging.debug("players_move_list %s" % players_move_list_tmp)  # 视野内buff获取
 
 
 
+        move_list = fornmat_move(players_move_list)
+        move_str = str({"move": move_list})
+        return move_str
 
-
-
-
-
-
-
-
-
-
-    #1.计算到目标位置的路径
-    players_shortest_path=A_start.format_data_and_get_path(pubg_map=treasures_map,start_point_map=players_info,end_point_map=poison)
-    #2.视野分析 + 碰撞检测
-    players_move=anlyse_sight(pubg_map=treasures_map,players_shortest_path=players_shortest_path,sight_info=sight_info)
 
     #3.最后攻击
 
-    move_list=fornmat_move(players_shortest_path)
+    #返回路径格式化
+    move_list=fornmat_move(players_move_list)
     move_str=str({"move":move_list})
     return move_str
+
+
+#获取单个视野
+def get_one_player_sight(id,sight_info_all):
+    for one_sight_dic in sight_info_all:
+        if id in one_sight_dic:
+            return one_sight_dic[id]
+    return []
+
+#获取视野的buff
+"""
+2、	＋10攻击 player att+10
+3、	＋10血量 player hp+10
+4、	＋1视野 （player最大3格视野）
+
+input 
+[{'pos': '[39,26]', 'type': '1'}, 
+{'pos': '[39,27]', 'type': '0'}, 
+{'pos': '[39,28]', 'type': '0'},]
+"""
+def get_buff_in_sight(one_sight_info):
+    for point_dic in one_sight_info:
+        end_point_str = point_dic["pos"]
+        end_point = list(map(int, end_point_str.strip("]").strip("[").split(",")))
+        if point_dic["type"] == "2" or point_dic["type"] == "3" or point_dic["type"] == "4":
+            return end_point
+    return None
+
+
+
+
+
+
+
+
+def collision_detection(move):
+    pass
+
+
 
 
 

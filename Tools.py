@@ -41,9 +41,9 @@ def get_safe_edge_blank(treasures_map,left_point,radius):
     edge_list=[]
     for i in range(1,radius-1):
         point_top=(left_point_x+1,left_point_y+i)
-        point_buttom=(left_point_x+radius-2,left_point_y+i)
+        point_buttom=(left_point_x+radius-3,left_point_y+i)
         point_left=(left_point_x+i,left_point_y+1)
-        point_right=(left_point_x+i,left_point_y+radius-2)
+        point_right=(left_point_x+i,left_point_y+radius-3)
         if 0<=point_top[0]<=49 and 0<=point_top[1]<=49 and treasures_map[point_top[0],point_top[1]] != 1:
             edge_list.append(point_top)
         if 0<=point_buttom[0]<=49 and 0<=point_buttom[1]<=49 and treasures_map[point_buttom[0], point_buttom[1]] != 1:

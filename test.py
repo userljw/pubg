@@ -82,11 +82,4 @@
 #         edge_list.append(point_right)
 #     return list(set(edge_list))
 
-#生成一个字典
-d = {'name':{},'age':{},'sex':{}}
-#打印返回值，其中d.keys()是列出字典所有的key
-print ("name" in d.keys())
-#结果返回Tru
-
-if 2< 11<4:
-    print(11111111111)
+print (int("50"))
