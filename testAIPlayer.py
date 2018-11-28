@@ -1,5 +1,7 @@
 #encoding=utf-8
-
+"""
+陪练
+"""
 
 import threading
 from SockClient import SockClient

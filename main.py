@@ -54,7 +54,7 @@ def mainloop(client):
             try:
                 move_str = algorithm(treasures_map=treasures_map, poison=poison_data, info=real_data,remain_step=remain_step)
             except Exception as es:
-                logging.error("---触发算法bug，随机游走--- Exception[%s]" %Exception)
+                logging.error("---触发算法bug，随机游走--- Exception[%s]" % es)
                 move_str = str({"move": [{"id": TEAM_NAME + "01", "movement": str(random.randint(1, 9))},
                                          {"id": TEAM_NAME + "02", "movement": str(random.randint(1, 9))},
                                          {"id": TEAM_NAME + "03", "movement": str(random.randint(1, 9))}]})
@@ -66,7 +66,7 @@ def mainloop(client):
 if __name__ == '__main__':
 
     from testAIPlayer import test_main
-    test_main(4)
+    test_main(6)
 
     client = login()
     mainloop(client)

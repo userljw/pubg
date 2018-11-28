@@ -3,11 +3,13 @@
 
 
 """
-from STATIC_DATA import OBSTACLE_POSITION_ARRAY,TEAM_NAME,MOVE_MAP
+
 import logging
 import A_start
 import Tools
 import copy
+import random
+from STATIC_DATA import TEAM_NAME,MOVE_MAP,MOVE_LIST
 
 # 方向说明    5代表原地不动
 # 7 8 9
@@ -55,8 +57,6 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
     # ----------------------------------基础信息准备-end---------------------------------------------
     #队员行动路径规则
     players_move_list = []
-    #TODO
-    # if int(poison_turn) == 50 or int(poison_turn) == 30:
     for one_player in players_info_has_shortest:
         one_player_id = one_player['id']
         point_str = one_player["pos"]
@@ -85,8 +85,8 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
         players_move_list.append(one_player)
     logging.debug("players_move_list %s" % players_move_list)
 
-    players_move_list_optimizationed=[]
 
+    players_move_list_optimizationed=[]
     #todo
     if int(poison_turn) >=30 and remain_step >= 4:
         for one_player in players_move_list:
@@ -94,17 +94,24 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
                 #去吃地图上最近的一个宝物点：
                 point_str = one_player["pos"]
                 start_point = list(map(int, point_str.strip("]").strip("[").split(",")))
-                nearest_buff=find_nearest_buff_in_map(start_point,treasures_map)
-                treasures_journey=A_start.get_shortest_path(treasures_map,start_point,nearest_buff)
-                one_player["path"] = treasures_journey # 获取宝物  而不是原地不动
-        players_move_list_optimizationed.append(one_player)
+                sight=one_player["sight"]
+                nearest_buff=find_nearest_buff_in_map(start_point,treasures_map,sight)
+                if nearest_buff != None:
+                    treasures_journey=A_start.get_shortest_path(treasures_map,start_point,nearest_buff)
+                    one_player["path"] = treasures_journey # 获取宝物  而不是原地不动
+                #附近没有buff 随机走一下
+                if len(one_player["path"])==0:
+                    one_player["path"] = [MOVE_LIST[random.randint(0,8)]]
+            players_move_list_optimizationed.append(one_player)
+        # 返回路径格式化
+        logging.debug("players_move_list_optimizationed %s" % players_move_list_optimizationed)
+        move_list = fornmat_move(players_move_list_optimizationed)
+        move_str = str({"move": move_list})
+        return move_str
 
-
-    # 返回路径格式化
-    move_list = fornmat_move(players_move_list_optimizationed)
+    move_list = fornmat_move(players_move_list)
     move_str = str({"move": move_list})
     return move_str
-
 
 
 
@@ -113,10 +120,48 @@ def algorithm(treasures_map=None,poison=None,info=None,remain_step=0):
 获取地图内最近的宝物点
 4步数内
 """
-def find_nearest_buff_in_map(start_point,treasures_map):
-    pass
-http://www.cnblogs.com/zhangbaoqiang/p/3534512.html
-https://blog.csdn.net/nilihzoo1o/article/details/79917409
+def find_nearest_buff_in_map(start_point,treasures_map,sight):
+    x=start_point[0]
+    y=start_point[1]
+    try:
+        if sight==1:
+            x_y_candidate = [(x - 2, y - 2), (x - 1, y - 2), (x, y - 2), (x + 1, y - 2), (x + 2, y - 2),
+                             (x - 2, y - 1), (x + 2, y - 1),
+                             (x - 2, y), (x + 2, y),
+                             (x - 2, y + 1), (x + 2, y + 1),
+                             (x - 2, y + 2), (x - 1, y + 2), (x, y + 2), (x + 1, y + 2), (x + 2, y + 2),
+                             (x - 3, y - 3), (x - 2, y - 3), (x - 1, y - 3), (x, y - 3), (x + 1, y - 3), (x + 2, y - 3),
+                             (x + 3, y + 3),
+                             (x - 3, y - 2), (x + 3, y - 2),
+                             (x - 3, y - 1), (x + 3, y - 1),
+                             (x - 3, y), (x + 3, y),
+                             (x - 3, y + 1), (x + 3, y + 1),
+                             (x - 3, y + 2), (x + 3, y + 2),
+                             (x - 3, y + 3), (x - 2, y + 3), (x - 1, y + 3), (x, y + 3), (x + 1, y + 3), (x + 2, y + 3),
+                             (x + 3, y + 3)]
+            for xy in x_y_candidate:
+                if treasures_map[xy[0],xy[1]] == 2 or treasures_map[xy[0],xy[1]] == 3 or treasures_map[xy[0],xy[1]] == 4:
+                    return xy
+        if 1<sight<=2:
+            x_y_candidate = [(x - 3, y - 3), (x - 2, y - 3), (x - 1, y - 3), (x, y - 3), (x + 1, y - 3), (x + 2, y - 3),
+                             (x + 3, y + 3),
+                             (x - 3, y - 2), (x + 3, y - 2),
+                             (x - 3, y - 1), (x + 3, y - 1),
+                             (x - 3, y), (x + 3, y),
+                             (x - 3, y + 1), (x + 3, y + 1),
+                             (x - 3, y + 2), (x + 3, y + 2),
+                             (x - 3, y + 3), (x - 2, y + 3), (x - 1, y + 3), (x, y + 3), (x + 1, y + 3), (x + 2, y + 3),
+                             (x + 3, y + 3)]
+            for xy in x_y_candidate:
+                if treasures_map[xy[0],xy[1]] == 2 or treasures_map[xy[0],xy[1]] == 3 or treasures_map[xy[0],xy[1]] == 4:
+                    return xy
+        if sight>2:
+            return None
+    except:
+        return None
+
+
+
 
 
 
@@ -180,16 +225,19 @@ def fornmat_move(players_shortest_path):
         if one_player["status"]==0:
             one_player_move={"id":one_player["id"],"movement":str(5)}
         else:
-            path=one_player["path"]
-            if len(path)==0:
-                one_player_move = {"id": one_player["id"], "movement": str(5)}
-            else:
-                now_point_str=one_player["pos"]
-                now_point=list(map(int, now_point_str.strip("]").strip("[").split(",")))
-                step_next=path[0]
-                direction_tuple=(step_next[0]-now_point[0],step_next[1]-now_point[1])
-                direction_str=MOVE_MAP[direction_tuple]
-                one_player_move = {"id": one_player["id"], "movement": direction_str}
+            try:
+                path=one_player["path"]
+                if len(path)==0:
+                    one_player_move = {"id": one_player["id"], "movement": str(5)}
+                else:
+                    now_point_str=one_player["pos"]
+                    now_point=list(map(int, now_point_str.strip("]").strip("[").split(",")))
+                    step_next=path[0]
+                    direction_tuple=(step_next[0]-now_point[0],step_next[1]-now_point[1])
+                    direction_str=MOVE_MAP[direction_tuple]
+                    one_player_move = {"id": one_player["id"], "movement": direction_str}
+            except:
+                one_player_move = {"id": one_player["id"], "movement": str(random.randint(1, 9))}
         player_move_list.append(one_player_move)
     return player_move_list
 

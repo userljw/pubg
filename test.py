@@ -86,3 +86,7 @@
 #     return list(set(edge_list))
 
 print (int("50"))
+
+import random
+for i in range(100):
+    print(random.randint(0, 8))
